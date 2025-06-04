@@ -4,13 +4,14 @@ type: "rule"
 severity: "low"
 source: |
   type.inbound
-  and length(body.current_thread.text) < 2000
-  and length(body.links) < 5
-  and any(beta.ml_topic(coalesce(body.html.display_text, body.plain.raw)).topics,
+  and 4 of (
+  length(body.current_thread.text) < 2000,
+  length(body.links) < 5,
+  any(beta.ml_topic(coalesce(body.html.display_text, body.plain.raw)).topics,
           .name in ("Contact List Solicitation", "B2B Cold Outreach")
           and .confidence in ("medium", "high")
-  )
-  and (
+  ),
+  (
     (
       (
         any([subject.subject, body.current_thread.text],
@@ -112,6 +113,10 @@ source: |
                 )
               )
       )
+    ),
+    sender.email.domain.domain in $free_email_providers,
+    regex.icontains(sender.email.local_part,
+                    '(connect|attend|lead|data|b2b|expo|search|provider|list|prospect|solution|event|trade|show|plan|info|estimat)'
     )
   )
   // negate Zendesk support tickets
